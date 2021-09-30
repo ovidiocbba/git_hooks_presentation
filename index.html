@@ -13,9 +13,9 @@
 
   <!-- Theme used for slides -->
   <link rel="stylesheet" href="dist/theme/league.css" id="theme"/>
-
-  <!-- Theme used for syntax highlighted code -->
-  <link rel="stylesheet" href="plugin/highlight/monokai.css">
+  <!-- Theme used for syntax highlighting code -->
+  <link rel="stylesheet" href="plugin/highlight/monokai.css" id="highlight-theme">
+  <link rel="stylesheet" href="plugin/copycode/copycode.css">
 </head>
 
 <body>
@@ -25,10 +25,108 @@
       <h2>Get started with Git Hooks</h2>
       <img data-src="img/git_logo.png" width="512" height="214" style="border: none;box-shadow: none; background-color: transparent;"/>
       <p>
-        <small>Created by: <a>Simón Ovidio Miranda Chiri</a> /
-          <a>ovidio.miranda@jalasoft.com</a>
-        </small>
+        <small>Created by: <a>Simón Ovidio Miranda Chiri</a> /<a>ovidio.miranda@jalasoft.com</a></small>
       </p>
+    </section>
+    <section>
+      <h1>Hooks</h1>
+    </section>
+    <section>
+      <h2>Hooks</h2>
+      <img data-src="img/folder_structure.png" width="550" height="450"/>
+      <pre><code data-cc="false">project-name/.git/hooks</code></pre>
+    </section>
+    <section>
+      <h2>Hooks</h2>
+      <p>Blocks a push to a branch.</p>
+      <pre><code>vim .git/hooks/pre-push</code></pre>
+      <pre style="font-size:15px;"><code class="hljs" data-trim>
+          #!/bin/bash
+          protected_branch_1='master'
+          protected_branch_2='develop'
+          current_branch=$(git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,')
+
+          if [ $protected_branch_1 = $current_branch ] || [ $protected_branch_2 = $current_branch ]
+          then
+              read -p "You are about to push a protected branch, is that what you intended? [y|n] " -n 1 -r < /dev/tty
+              echo
+              if echo $REPLY | grep -E '^[Yy]$' > /dev/null
+              then
+                  exit 0 # push will execute
+              fi
+              exit 1 # push will not execute
+          else
+              exit 0 # push will execute
+          fi
+      </code></pre>
+    </section>
+    <section>
+      <h2>Hooks</h2>
+      <sml style="font-size:25px;">Alert if you don't have the latest develop branch changes.</sml>
+      <pre style="font-size:25px;"><code>rm .git/hooks/pre-push</code></pre>
+      <pre style="font-size:25px;"><code>vim .git/hooks/pre-push</code></pre>
+      <pre style="font-size:15px;"><code class="hljs bash" data-trim>
+            #!/bin/bash
+            current_branch=$(git rev-parse --abbrev-ref HEAD)
+            target_branch='develop'
+
+            git_ahead_and_behind=$(git rev-list --left-right --count origin/$target_branch...$current_branch | awk '{print ""$1"-"$2""}')
+            behind=$(echo $git_ahead_and_behind | cut -f1 -d-)
+
+            if [ $behind -gt 0 ];
+            then
+                echo -e "\e[31mAlert:\e[0m The '$current_branch' branch does not have the latest changes from the '$target_branch' branch."
+                echo "The source branch is '$behind' commits behind the target branch".
+            fi
+      </code></pre>
+    </section>
+    <section>
+      <h2>Hooks</h2>
+      <sml>Execute the Javadoc task.</sml>
+      <pre><code>vim .git/hooks/pre-push</code></pre>
+      <pre style="font-size:20px;"><code class="hljs" data-trim>
+            #!/bin/bash
+            read -p "Do you want to execute the Javadoc task? [y|n] " -n 1 -r < /dev/tty
+            echo
+            if echo $REPLY | grep -E '^[Yy]$' > /dev/null; then
+              echo "** Executing the Javadoc task **"
+              gradle javadoc
+              echo "** Finished the Javadoc task **"
+            else
+              echo "** The javadoc task was not executed **"
+            fi
+      </code></pre>
+    </section>
+    <section>
+      <h2>Hooks</h2>
+      <sml>Team</sml>
+      <pre><code>vim .git/hooks/pre-push</code></pre>
+      <pre style="font-size:20px;"><code class="hljs" data-trim>
+            #!/bin/bash
+            # Section 1.
+            current_branch=$(git rev-parse --abbrev-ref HEAD)
+            target_branch='develop'
+
+            git_ahead_and_behind=$(git rev-list --left-right --count origin/$target_branch...$current_branch | awk '{print ""$1"-"$2""}')
+            behind=$(echo $git_ahead_and_behind | cut -f1 -d-)
+
+            if [ $behind -gt 0 ];
+            then
+              echo -e "\e[31mAlert:\e[0m The '$current_branch' branch does not have the latest changes from the '$target_branch' branch."
+              echo -e "The source branch is '$behind' commits behind the target branch\n"
+            fi
+
+            # Section 2.
+            read -p "Do you want to execute the Javadoc task? [y|n] " -n 1 -r < /dev/tty;
+            if echo $REPLY | grep -E '^[Yy]$' > /dev/null
+            then
+              echo -e "\n** Executing the Javadoc task **"
+              gradle javadoc
+              echo -e "\n** Finished the Javadoc task **"
+            else
+              echo -e "\n\e[31m** The javadoc task was not executed **\e[0m"
+            fi
+      </code></pre>
     </section>
   </div>
 </div>
@@ -37,6 +135,8 @@
 <script src="plugin/notes/notes.js"></script>
 <script src="plugin/markdown/markdown.js"></script>
 <script src="plugin/highlight/highlight.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js"></script>
+<script src="plugin/copycode/copycode.js"></script>
 <script>
 			// More info about initialization & config:
 			// - https://revealjs.com/initialization/
@@ -45,7 +145,7 @@
 				hash: true,
 
 				// Learn about plugins: https://revealjs.com/plugins/
-				plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+				plugins: [ RevealMarkdown, RevealHighlight, CopyCode, RevealNotes ]
 			});
 </script>
 </body>
